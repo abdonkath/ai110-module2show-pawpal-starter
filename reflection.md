@@ -6,6 +6,12 @@
 
 - Briefly describe your initial UML design.
 - What classes did you include, and what responsibilities did you assign to each?
+  The UML diagram models a pet care scheduling system w/ 4 classes connected. If Owner has 1 or more Pets, each Pet has a list of Tasks, and a Scheduler bring them to together to create a daily care plan. It is based on the owner's available time and each task's prioruty and duration.
+  I included:
+  Owner: stores pet owner's name, time availability, and care preferences
+  Pets: stores pet's basic info like name, species, and age
+  Task: represents the activity like walking, feeding, meds and more. It also has duration and priority level. It tracks if the task has been completed or not
+  Scheduler: Takes Owner and Pet as input and creates a prioritized daily plan that fits w/ owner available time
 
 **b. Design changes**
 
