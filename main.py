@@ -93,3 +93,14 @@ else:
     print("  No conflicts found.")
 
 print("=" * 55)
+
+# ── Recurring task completion demo ────────────────────────────────────────────
+print()
+print("=" * 55)
+print("        COMPLETE A RECURRING TASK")
+print("=" * 55)
+next_task = scheduler.mark_task_complete("Buddy", "Morning Walk")
+if next_task:
+    print(f"  'Morning Walk' marked complete.")
+    print(f"  Next occurrence created -> due: {next_task.due_date}")
+print("=" * 55)

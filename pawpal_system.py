@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from datetime import date, timedelta
 from typing import List, Optional
 
 
@@ -12,6 +13,7 @@ class Task:
     time: str = "00:00"          # scheduled time in "HH:MM" format
     recurring: bool = False      # whether the task repeats
     interval_days: int = 1       # how often it recurs (in days)
+    due_date: Optional[date] = None  # date this task is due
 
     def mark_complete(self) -> None:
         """Mark this task as completed."""
@@ -127,6 +129,40 @@ class Scheduler:
     def get_recurring_tasks(self) -> List[Task]:
         """Return all tasks marked as recurring across all pets."""
         return [t for t in self._get_all_tasks() if t.recurring]
+
+    def mark_task_complete(self, pet_name: str, task_name: str) -> Optional[Task]:
+        """Mark a task as complete and, if it is recurring, add the next occurrence.
+
+        Uses timedelta to advance the due_date by interval_days:
+            next_due = current_due_date + timedelta(days=interval_days)
+
+        Returns the newly created Task if one was generated, otherwise None.
+        """
+        for pet in self.owner.get_pets():
+            if pet.name.lower() != pet_name.lower():
+                continue
+            for task in pet.get_tasks():
+                if task.name.lower() != task_name.lower():
+                    continue
+                task.mark_complete()
+                if not task.recurring:
+                    return None
+                # Calculate the next due date using timedelta
+                base_date = task.due_date if task.due_date else date.today()
+                next_due = base_date + timedelta(days=task.interval_days)
+                next_task = Task(
+                    name=task.name,
+                    category=task.category,
+                    duration_minutes=task.duration_minutes,
+                    priority=task.priority,
+                    time=task.time,
+                    recurring=True,
+                    interval_days=task.interval_days,
+                    due_date=next_due,
+                )
+                pet.add_task(next_task)
+                return next_task
+        return None
 
     def detect_conflicts(self) -> List[tuple]:
         """Return pairs of tasks scheduled at the same time (conflict detection).
