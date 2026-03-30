@@ -16,6 +16,7 @@ class Task:
     def is_high_priority(self) -> bool:
         return self.priority >= 4
 
+
 @dataclass
 class Pet:
     name: str
@@ -29,7 +30,6 @@ class Pet:
 
     def get_tasks(self) -> List[Task]:
         return self.tasks
-
 
 @dataclass
 class Owner:
