@@ -22,6 +22,15 @@ Your final app should:
 - Display the plan clearly (and ideally explain the reasoning)
 - Include tests for the most important scheduling behaviors
 
+## Features
+
+- **Priority-based scheduling** — `Scheduler.generate_plan()` picks incomplete tasks in priority order (1–5), fitting as many as possible within the owner's available minutes for the day.
+- **Sorting by time** — `sort_by_time()` uses Python's `sorted()` with a `lambda` key on `"HH:MM"` strings to return every task in chronological order, regardless of the order they were added.
+- **Filtering** — `filter_tasks(pet_name, completed)` lets you narrow the task list by pet and/or completion status. Both filters are optional and can be combined.
+- **Conflict warnings** — `get_conflict_warnings()` scans all scheduled tasks for exact time-slot collisions and returns plain-English warning strings (e.g., `"Walk (Buddy) and Vet (Whiskers) are both at 09:00"`). The Streamlit UI surfaces these as `st.warning()` banners so they are impossible to miss.
+- **Recurring tasks** — Tasks can be marked `recurring=True` with an `interval_days` value. When `mark_task_complete()` is called, it uses Python's `timedelta` to compute the next due date and automatically adds the next occurrence to the pet's task list.
+- **High-priority flag** — `Task.is_high_priority()` returns `True` for any task with priority ≥ 4, used by the UI to highlight urgent care items.
+
 ## Smarter Scheduling
 
 Phase 3 added algorithmic intelligence to the `Scheduler` class in `pawpal_system.py`:
@@ -45,19 +54,19 @@ python -m pytest tests/test_pawpal.py -v
 
 ### What the tests cover
 
-| Group | # Tests | Behaviors verified |
-|---|---|---|
-| **Task basics** | 2 | Completing a task flips `completed` to `True`; adding a task grows the pet's list |
-| **Sorting** | 3 | Tasks return in chronological `HH:MM` order; single task and empty pet don't crash |
-| **Filtering** | 3 | Filter by pet name; filter by completion status; no filters returns all tasks |
-| **Recurring tasks** | 4 | Daily recurrence schedules next task for tomorrow; weekly for +7 days; non-recurring returns `None`; task count grows after each completion |
-| **Conflict detection** | 4 | Cross-pet time clash is flagged; same-pet clash is flagged; different times produce no warning; unscheduled tasks (`"00:00"`) are ignored |
+| Group                  | # Tests | Behaviors verified                                                                                                                          |
+| ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Task basics**        | 2       | Completing a task flips `completed` to `True`; adding a task grows the pet's list                                                           |
+| **Sorting**            | 3       | Tasks return in chronological `HH:MM` order; single task and empty pet don't crash                                                          |
+| **Filtering**          | 3       | Filter by pet name; filter by completion status; no filters returns all tasks                                                               |
+| **Recurring tasks**    | 4       | Daily recurrence schedules next task for tomorrow; weekly for +7 days; non-recurring returns `None`; task count grows after each completion |
+| **Conflict detection** | 4       | Cross-pet time clash is flagged; same-pet clash is flagged; different times produce no warning; unscheduled tasks (`"00:00"`) are ignored   |
 
 **Total: 16 tests, all passing.**
 
 ### Confidence level
 
-⭐⭐⭐⭐ (4/5)
+(4/5)
 
 The core scheduling behaviors — sorting, filtering, recurring automation, and conflict detection — are all covered with both happy-path and edge-case tests. One star is held back because conflict detection only checks for exact `HH:MM` matches and does not catch overlapping durations (e.g., a 30-minute task at 09:00 overlapping a task starting at 09:20).
 
