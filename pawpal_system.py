@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 
 
 @dataclass
@@ -9,6 +9,9 @@ class Task:
     duration_minutes: int
     priority: int
     completed: bool = False
+    time: str = "00:00"          # scheduled time in "HH:MM" format
+    recurring: bool = False      # whether the task repeats
+    interval_days: int = 1       # how often it recurs (in days)
 
     def mark_complete(self) -> None:
         """Mark this task as completed."""
@@ -95,3 +98,46 @@ class Scheduler:
     def get_total_duration(self) -> int:
         """Return the total minutes of all tasks in the generated plan."""
         return sum(t.duration_minutes for t in self.generate_plan())
+
+    def sort_by_time(self) -> List[Task]:
+        """Return all tasks sorted chronologically by their 'HH:MM' time attribute."""
+        return sorted(self._get_all_tasks(), key=lambda t: t.time)
+
+    def filter_tasks(
+        self,
+        pet_name: Optional[str] = None,
+        completed: Optional[bool] = None,
+    ) -> List[Task]:
+        """Return tasks filtered by pet name and/or completion status.
+
+        Args:
+            pet_name: If provided, only tasks belonging to this pet are returned.
+            completed: If provided, only tasks matching this completion state are returned.
+        """
+        results = []
+        for pet in self.owner.get_pets():
+            if pet_name is not None and pet.name.lower() != pet_name.lower():
+                continue
+            for task in pet.get_tasks():
+                if completed is not None and task.completed != completed:
+                    continue
+                results.append(task)
+        return results
+
+    def get_recurring_tasks(self) -> List[Task]:
+        """Return all tasks marked as recurring across all pets."""
+        return [t for t in self._get_all_tasks() if t.recurring]
+
+    def detect_conflicts(self) -> List[tuple]:
+        """Return pairs of tasks scheduled at the same time (conflict detection).
+
+        Uses a simple O(n²) scan comparing 'HH:MM' time strings. Returns a list
+        of (task_a, task_b) tuples where both tasks share the same time slot.
+        """
+        tasks = [t for t in self._get_all_tasks() if t.time != "00:00"]
+        conflicts = []
+        for i in range(len(tasks)):
+            for j in range(i + 1, len(tasks)):
+                if tasks[i].time == tasks[j].time:
+                    conflicts.append((tasks[i], tasks[j]))
+        return conflicts
