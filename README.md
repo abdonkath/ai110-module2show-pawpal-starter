@@ -70,6 +70,10 @@ python -m pytest tests/test_pawpal.py -v
 
 The core scheduling behaviors — sorting, filtering, recurring automation, and conflict detection — are all covered with both happy-path and edge-case tests. One star is held back because conflict detection only checks for exact `HH:MM` matches and does not catch overlapping durations (e.g., a 30-minute task at 09:00 overlapping a task starting at 09:20).
 
+### Demo
+
+<a href="Screenshot 2026-03-30 004825.png" target="_blank"><img src='Screenshot 2026-03-30 004825.png' title='PawPal App' width='' alt='PawPal App' class='center-block' /></a>
+
 ## Getting started
 
 ### Setup
