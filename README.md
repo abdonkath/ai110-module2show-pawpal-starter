@@ -26,14 +26,40 @@ Your final app should:
 
 Phase 3 added algorithmic intelligence to the `Scheduler` class in `pawpal_system.py`:
 
-| Feature | Method | How it works |
-|---|---|---|
-| **Sort by time** | `sort_by_time()` | Uses `sorted()` with a `lambda` key on `"HH:MM"` strings to return all tasks in chronological order |
-| **Filter tasks** | `filter_tasks(pet_name, completed)` | Accepts optional filters for pet name and/or completion status; returns only matching tasks |
-| **Recurring tasks** | `mark_task_complete()` | When a recurring task is completed, automatically creates the next occurrence using `timedelta(days=interval_days)` |
-| **Conflict detection** | `get_conflict_warnings()` | Scans all scheduled tasks for exact time-slot collisions and returns plain-English warning strings |
+| Feature                | Method                              | How it works                                                                                                        |
+| ---------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **Sort by time**       | `sort_by_time()`                    | Uses `sorted()` with a `lambda` key on `"HH:MM"` strings to return all tasks in chronological order                 |
+| **Filter tasks**       | `filter_tasks(pet_name, completed)` | Accepts optional filters for pet name and/or completion status; returns only matching tasks                         |
+| **Recurring tasks**    | `mark_task_complete()`              | When a recurring task is completed, automatically creates the next occurrence using `timedelta(days=interval_days)` |
+| **Conflict detection** | `get_conflict_warnings()`           | Scans all scheduled tasks for exact time-slot collisions and returns plain-English warning strings                  |
 
 `Task` gained three new optional fields to support these features: `time` (`"HH:MM"`), `recurring` (bool), `interval_days` (int), and `due_date` (`date`).
+
+## Testing PawPal+
+
+### Run the tests
+
+```bash
+python -m pytest tests/test_pawpal.py -v
+```
+
+### What the tests cover
+
+| Group | # Tests | Behaviors verified |
+|---|---|---|
+| **Task basics** | 2 | Completing a task flips `completed` to `True`; adding a task grows the pet's list |
+| **Sorting** | 3 | Tasks return in chronological `HH:MM` order; single task and empty pet don't crash |
+| **Filtering** | 3 | Filter by pet name; filter by completion status; no filters returns all tasks |
+| **Recurring tasks** | 4 | Daily recurrence schedules next task for tomorrow; weekly for +7 days; non-recurring returns `None`; task count grows after each completion |
+| **Conflict detection** | 4 | Cross-pet time clash is flagged; same-pet clash is flagged; different times produce no warning; unscheduled tasks (`"00:00"`) are ignored |
+
+**Total: 16 tests, all passing.**
+
+### Confidence level
+
+⭐⭐⭐⭐ (4/5)
+
+The core scheduling behaviors — sorting, filtering, recurring automation, and conflict detection — are all covered with both happy-path and edge-case tests. One star is held back because conflict detection only checks for exact `HH:MM` matches and does not catch overlapping durations (e.g., a 30-minute task at 09:00 overlapping a task starting at 09:20).
 
 ## Getting started
 
