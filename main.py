@@ -16,9 +16,11 @@ buddy.add_task(Task(name="Flea Treatment",    category="Grooming",  duration_min
                     priority=4, time="09:00"))
 buddy.add_task(Task(name="Training Session",  category="Training",  duration_minutes=20,
                     priority=3, time="14:00"))
+buddy.add_task(Task(name="Nail Trim",         category="Grooming",  duration_minutes=10,
+                    priority=3, time="14:00"))        # same time as Training Session → same-pet conflict!
 
 whiskers.add_task(Task(name="Vet Check-up",   category="Health",    duration_minutes=45,
-                        priority=5, time="09:00"))   # same time as Flea Treatment → conflict!
+                        priority=5, time="09:00"))   # same time as Flea Treatment → cross-pet conflict!
 whiskers.add_task(Task(name="Brush Coat",     category="Grooming",  duration_minutes=10,
                         priority=2, time="11:00", recurring=True, interval_days=3))
 
@@ -85,10 +87,10 @@ print()
 print("=" * 55)
 print("        SCHEDULE CONFLICTS")
 print("=" * 55)
-conflicts = scheduler.detect_conflicts()
-if conflicts:
-    for a, b in conflicts:
-        print(f"  !! {a.name} vs {b.name}  (both at {a.time})")
+warnings = scheduler.get_conflict_warnings()
+if warnings:
+    for w in warnings:
+        print(f"  !! {w}")
 else:
     print("  No conflicts found.")
 

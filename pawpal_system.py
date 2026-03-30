@@ -164,16 +164,41 @@ class Scheduler:
                 return next_task
         return None
 
-    def detect_conflicts(self) -> List[tuple]:
-        """Return pairs of tasks scheduled at the same time (conflict detection).
+    def _get_tasks_with_pet(self) -> List[tuple]:
+        """Return a list of (task, pet) pairs for every task across all pets."""
+        pairs = []
+        for pet in self.owner.get_pets():
+            for task in pet.get_tasks():
+                pairs.append((task, pet))
+        return pairs
 
-        Uses a simple O(n²) scan comparing 'HH:MM' time strings. Returns a list
-        of (task_a, task_b) tuples where both tasks share the same time slot.
+    def detect_conflicts(self) -> List[tuple]:
+        """Return (task_a, pet_a, task_b, pet_b) tuples for every time-slot collision.
+
+        Uses a lightweight O(n²) scan of 'HH:MM' time strings. Tasks with the
+        default time '00:00' (i.e. unscheduled) are excluded from the check.
         """
-        tasks = [t for t in self._get_all_tasks() if t.time != "00:00"]
+        pairs = [(t, p) for t, p in self._get_tasks_with_pet() if t.time != "00:00"]
         conflicts = []
-        for i in range(len(tasks)):
-            for j in range(i + 1, len(tasks)):
-                if tasks[i].time == tasks[j].time:
-                    conflicts.append((tasks[i], tasks[j]))
+        for i in range(len(pairs)):
+            for j in range(i + 1, len(pairs)):
+                task_a, pet_a = pairs[i]
+                task_b, pet_b = pairs[j]
+                if task_a.time == task_b.time:
+                    conflicts.append((task_a, pet_a, task_b, pet_b))
         return conflicts
+
+    def get_conflict_warnings(self) -> List[str]:
+        """Return a list of human-readable warning strings for every conflict found.
+
+        Returns an empty list when no conflicts exist, so callers never crash —
+        they can simply check `if warnings` before printing.
+        """
+        warnings = []
+        for task_a, pet_a, task_b, pet_b in self.detect_conflicts():
+            warnings.append(
+                f"WARNING: '{task_a.name}' ({pet_a.name}) and "
+                f"'{task_b.name}' ({pet_b.name}) "
+                f"are both scheduled at {task_a.time}."
+            )
+        return warnings
