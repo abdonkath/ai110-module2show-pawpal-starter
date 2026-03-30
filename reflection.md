@@ -29,8 +29,14 @@ Originally, the Scheduler was planned to consider the owner's preferences (like 
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+The conflict detection only flags tasks that share an **exact** `HH:MM` start time — it does not check whether two tasks *overlap* in duration. For example, a 30-minute walk at 09:00 and a 15-minute vet visit at 09:20 would not be flagged, even though they overlap in real life.
+
+This is a reasonable tradeoff for a first version because:
+- Exact-match comparisons are simple string equality (`task_a.time == task_b.time`), requiring no time parsing or arithmetic.
+- Most pet-care schedules are planned in clear, non-overlapping blocks, so exact-time collisions catch the most common mistake.
+- Adding overlap detection would require converting `"HH:MM"` strings to `datetime` objects, computing end times from `duration_minutes`, and checking range intersections — significantly more complexity for an edge case most users won't hit.
+
+A future improvement would use `datetime.strptime` to parse times and compare `[start, start + duration)` intervals instead.
 
 ---
 
