@@ -22,6 +22,19 @@ Your final app should:
 - Display the plan clearly (and ideally explain the reasoning)
 - Include tests for the most important scheduling behaviors
 
+## Smarter Scheduling
+
+Phase 3 added algorithmic intelligence to the `Scheduler` class in `pawpal_system.py`:
+
+| Feature | Method | How it works |
+|---|---|---|
+| **Sort by time** | `sort_by_time()` | Uses `sorted()` with a `lambda` key on `"HH:MM"` strings to return all tasks in chronological order |
+| **Filter tasks** | `filter_tasks(pet_name, completed)` | Accepts optional filters for pet name and/or completion status; returns only matching tasks |
+| **Recurring tasks** | `mark_task_complete()` | When a recurring task is completed, automatically creates the next occurrence using `timedelta(days=interval_days)` |
+| **Conflict detection** | `get_conflict_warnings()` | Scans all scheduled tasks for exact time-slot collisions and returns plain-English warning strings |
+
+`Task` gained three new optional fields to support these features: `time` (`"HH:MM"`), `recurring` (bool), `interval_days` (int), and `due_date` (`date`).
+
 ## Getting started
 
 ### Setup

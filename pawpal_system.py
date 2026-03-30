@@ -58,6 +58,7 @@ class Owner:
 
 class Scheduler:
     def __init__(self, owner: Owner):
+        """Initialize the Scheduler with an Owner whose pets and tasks will be managed."""
         self.owner = owner
 
     def _get_all_tasks(self) -> List[Task]:
