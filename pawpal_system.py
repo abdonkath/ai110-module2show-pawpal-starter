@@ -11,9 +11,11 @@ class Task:
     completed: bool = False
 
     def mark_complete(self) -> None:
+        """Mark this task as completed."""
         self.completed = True
 
     def is_high_priority(self) -> bool:
+        """Return True if the task's priority is 4 or higher."""
         return self.priority >= 4
 
 
@@ -26,9 +28,11 @@ class Pet:
     tasks: List[Task] = field(default_factory=list)
 
     def add_task(self, task: Task) -> None:
+        """Append a task to this pet's task list."""
         self.tasks.append(task)
 
     def get_tasks(self) -> List[Task]:
+        """Return all tasks assigned to this pet."""
         return self.tasks
 
 @dataclass
@@ -39,9 +43,11 @@ class Owner:
     pets: List[Pet] = field(default_factory=list)
 
     def add_pet(self, pet: Pet) -> None:
+        """Register a pet under this owner."""
         self.pets.append(pet)
 
     def get_pets(self) -> List[Pet]:
+        """Return all pets belonging to this owner."""
         return self.pets
 
 
