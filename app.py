@@ -3,43 +3,15 @@ from pawpal_system import Owner, Pet, Task, Scheduler
 
 st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="centered")
 
-# Initialize Owner in session state once — persists across reruns
+# ── Session state ─────────────────────────────────────────────────────────────
 if "owner" not in st.session_state:
     st.session_state.owner = Owner(name="Jordan", available_minutes=90)
 
-st.title("PawPal+")
+owner: Owner = st.session_state.owner
+pets = owner.get_pets()
 
-st.markdown(
-    """
-Welcome to the PawPal+ starter app.
-
-This file is intentionally thin. It gives you a working Streamlit app so you can start quickly,
-but **it does not implement the project logic**. Your job is to design the system and build it.
-
-Use this app as your interactive demo once your backend classes/functions exist.
-"""
-)
-
-with st.expander("Scenario", expanded=True):
-    st.markdown(
-        """
-**PawPal+** is a pet care planning assistant. It helps a pet owner plan care tasks
-for their pet(s) based on constraints like time, priority, and preferences.
-
-You will design and implement the scheduling logic and connect it to this Streamlit UI.
-"""
-    )
-
-with st.expander("What you need to build", expanded=True):
-    st.markdown(
-        """
-At minimum, your system should:
-- Represent pet care tasks (what needs to happen, how long it takes, priority)
-- Represent the pet and the owner (basic info and preferences)
-- Build a plan/schedule for a day that chooses and orders tasks based on constraints
-- Explain the plan (why each task was chosen and when it happens)
-"""
-    )
+st.title("🐾 PawPal+")
+st.caption(f"Owner: **{owner.name}** · {owner.available_minutes} min available today")
 
 st.divider()
 
@@ -54,16 +26,16 @@ with col3:
     age = st.number_input("Age", min_value=0, max_value=30, value=2)
 
 if st.button("Add Pet"):
-    existing = [p.name for p in st.session_state.owner.get_pets()]
+    existing = [p.name for p in pets]
     if pet_name in existing:
         st.warning(f"{pet_name} is already added.")
     else:
-        st.session_state.owner.add_pet(Pet(name=pet_name, species=species, breed="", age=int(age)))
+        owner.add_pet(Pet(name=pet_name, species=species, breed="", age=int(age)))
         st.success(f"Added {pet_name} the {species}!")
+        st.rerun()
 
-pets = st.session_state.owner.get_pets()
 if pets:
-    st.write("**Pets:**", ", ".join(p.name for p in pets))
+    st.write("**Registered pets:**", ", ".join(p.name for p in pets))
 
 st.divider()
 
@@ -78,30 +50,112 @@ else:
     with col2:
         task_title = st.text_input("Task name", value="Morning walk")
     with col3:
-        duration = st.number_input("Duration (minutes)", min_value=1, max_value=240, value=20)
+        duration = st.number_input("Duration (min)", min_value=1, max_value=240, value=20)
     with col4:
-        priority = st.slider("Priority (1-5)", min_value=1, max_value=5, value=3)
+        priority = st.slider("Priority (1–5)", min_value=1, max_value=5, value=3)
+
+    col5, col6, col7 = st.columns(3)
+    with col5:
+        task_time = st.text_input("Time (HH:MM)", value="09:00",
+                                   help="Leave as 00:00 if time is not set")
+    with col6:
+        recurring = st.checkbox("Recurring?")
+    with col7:
+        interval_days = st.number_input("Every N days", min_value=1, max_value=365, value=1,
+                                         disabled=not recurring)
 
     if st.button("Add Task"):
         pet_obj = next(p for p in pets if p.name == target_pet)
-        pet_obj.add_task(Task(name=task_title, category="General", duration_minutes=int(duration), priority=priority))
+        pet_obj.add_task(Task(
+            name=task_title,
+            category="General",
+            duration_minutes=int(duration),
+            priority=priority,
+            time=task_time,
+            recurring=recurring,
+            interval_days=int(interval_days),
+        ))
         st.success(f"Added '{task_title}' to {target_pet}.")
-
-    for pet in pets:
-        if pet.get_tasks():
-            st.markdown(f"**{pet.name}'s tasks:**")
-            st.table([{"Task": t.name, "Duration (min)": t.duration_minutes, "Priority": t.priority, "Done": t.completed} for t in pet.get_tasks()])
+        st.rerun()
 
 st.divider()
 
+# ── Conflict Warnings ─────────────────────────────────────────────────────────
+if pets:
+    scheduler = Scheduler(owner)
+    warnings = scheduler.get_conflict_warnings()
+    if warnings:
+        st.subheader("⚠️ Schedule Conflicts")
+        for w in warnings:
+            st.warning(w)
+        st.divider()
+
+# ── Task View: Sorted + Filtered ──────────────────────────────────────────────
+if pets and any(p.get_tasks() for p in pets):
+    st.subheader("All Tasks")
+
+    col_filter1, col_filter2 = st.columns(2)
+    with col_filter1:
+        filter_pet = st.selectbox(
+            "Filter by pet",
+            ["All pets"] + [p.name for p in pets],
+        )
+    with col_filter2:
+        filter_status = st.selectbox(
+            "Filter by status",
+            ["All", "Pending only", "Completed only"],
+        )
+
+    scheduler = Scheduler(owner)
+
+    pet_name_filter = None if filter_pet == "All pets" else filter_pet
+    completed_filter = None
+    if filter_status == "Pending only":
+        completed_filter = False
+    elif filter_status == "Completed only":
+        completed_filter = True
+
+    filtered = scheduler.filter_tasks(pet_name=pet_name_filter, completed=completed_filter)
+    sorted_tasks = sorted(filtered, key=lambda t: t.time)
+
+    if not sorted_tasks:
+        st.info("No tasks match the selected filters.")
+    else:
+        rows = []
+        for t in sorted_tasks:
+            rows.append({
+                "Time": t.time,
+                "Task": t.name,
+                "Duration (min)": t.duration_minutes,
+                "Priority": t.priority,
+                "Recurring": "Yes" if t.recurring else "No",
+                "Status": "Done" if t.completed else "Pending",
+            })
+        st.table(rows)
+
+    st.divider()
+
 # ── Generate Schedule ─────────────────────────────────────────────────────────
-st.subheader("Build Schedule")
+st.subheader("Today's Schedule")
 if st.button("Generate schedule"):
-    scheduler = Scheduler(st.session_state.owner)
+    scheduler = Scheduler(owner)
     plan = scheduler.generate_plan()
     if not plan:
-        st.warning("No tasks fit within the available time, or no tasks added yet.")
+        st.warning("No tasks fit within the available time, or no tasks have been added yet.")
     else:
         total = sum(t.duration_minutes for t in plan)
-        st.success(f"Scheduled {len(plan)} task(s) — {total} min used.")
-        st.table([{"Task": t.name, "Duration (min)": t.duration_minutes, "Priority": t.priority, "High Priority": t.is_high_priority()} for t in plan])
+        remaining = owner.available_minutes - total
+        st.success(f"Scheduled **{len(plan)} task(s)** · {total} min used · {remaining} min remaining")
+
+        rows = []
+        for t in plan:
+            rows.append({
+                "Time": t.time,
+                "Task": t.name,
+                "Category": t.category,
+                "Duration (min)": t.duration_minutes,
+                "Priority": t.priority,
+                "High Priority": "Yes" if t.is_high_priority() else "No",
+                "Recurring": "Yes" if t.recurring else "No",
+            })
+        st.table(rows)
