@@ -18,7 +18,7 @@
 - Did your design change during implementation?
 - If yes, describe at least one change and why you made it.
 
----
+Originally, the Scheduler was planned to consider the owner's preferences (like "morning walks") when building the plan. During implementation, I simplified this by the generate_plan() method only filters by priority and available time, ignoring preferences. I made this tradeoff because matching free-text preferences to task names added complexity that wasn't needed to get a working schedule. I also added a category field to Task that wasn't in the original UML, since it made the schedule output more readable and helped group tasks logically.
 
 ## 2. Scheduling Logic and Tradeoffs
 
